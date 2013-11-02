@@ -67,10 +67,8 @@ public class Indexer {
         
         getIndexWriter(true);
       
-        PreparedStatement selectItems = con.prepareStatement(
-        	"SELECT * from Item"
-        );
-        ResultSet rs = selectItems.executeQuery();
+        Statement selectItems = con.createStatement();
+        ResultSet rs = selectItems.executeQuery("SELECT * from Item");
         
         System.out.println("Indexing");
         //add the items tot he index
@@ -83,20 +81,26 @@ public class Indexer {
             doc.add(new Field("Description", rs.getString("Description"), Field.Store.YES, Field.Index.TOKENIZED));
            
             String categories = "";
-            PreparedStatement selectCategories = con.prepareStatement(
-            	"SELECT Category FROM ItemCategory WHERE ItemId=" + rs.getString("ItemId")
-            );
-            ResultSet catRs = selectCategories.executeQuery();
+            Statement selectCategories = con.createStatement();
+            String sql = "SELECT Category FROM ItemCategory WHERE ItemId=" + rs.getString("ItemId");
+            ResultSet catRs = selectCategories.executeQuery(sql);
+            
+            
             while(catRs.next()) {
             	categories += "" + catRs.getString("Category");
             }
             doc.add(new Field("Category", categories, Field.Store.YES, Field.Index.TOKENIZED));
+            System.out.println(categories);
             
-            String fullSearchableText = rs.getString("Name") + " "  + rs.getString("Description") + "" + categories;
+            String fullSearchableText = rs.getString("Name") + " "  + rs.getString("Description") + " " + categories;
             doc.add(new Field("Content", fullSearchableText, Field.Store.NO, Field.Index.TOKENIZED));
             writer.addDocument(doc);
+            
+            selectCategories.close();
         }
         System.out.println("Done Indexing");
+        
+        selectItems.close();
 	
 	
 	        // close the database connection
