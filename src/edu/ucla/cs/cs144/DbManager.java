@@ -8,7 +8,7 @@ public class DbManager {
         static private String databaseURL = "jdbc:mysql://localhost:3306/";
         static private String dbname = "CS144";
         static private String username = "cs144";
-        static private String password = "password";
+        static private String password = "";
 	
 	/**
 	 * Opens a database connection
