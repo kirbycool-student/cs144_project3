@@ -90,7 +90,6 @@ public class Indexer {
             	categories += "" + catRs.getString("Category");
             }
             doc.add(new Field("Category", categories, Field.Store.YES, Field.Index.TOKENIZED));
-            System.out.println(categories);
             
             String fullSearchableText = rs.getString("Name") + " "  + rs.getString("Description") + " " + categories;
             doc.add(new Field("Content", fullSearchableText, Field.Store.NO, Field.Index.TOKENIZED));
