@@ -25,18 +25,19 @@ public class Indexer {
 	@SuppressWarnings("deprecation")
 	public IndexWriter getIndexWriter(boolean create) throws IOException {
 		if (indexWriter == null) {
-			indexWriter = new IndexWriter("index",
+			indexWriter = new IndexWriter(System.getenv("LUCENE_INDEX") + "/index1",
                                           new StandardAnalyzer(),
                                           create);
         }
         return indexWriter;
     }
+	
     
- 
+	
     @SuppressWarnings("deprecation")
 	public void rebuildIndexes() throws CorruptIndexException, SQLException, IOException {
-
-        Connection con = null;
+        
+    	Connection con = null;
 
         // create a connection to the database to retrieve Items from MySQL
         try {
