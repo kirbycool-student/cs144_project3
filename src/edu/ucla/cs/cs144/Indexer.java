@@ -25,7 +25,7 @@ public class Indexer {
 	@SuppressWarnings("deprecation")
 	public IndexWriter getIndexWriter(boolean create) throws IOException {
 		if (indexWriter == null) {
-			indexWriter = new IndexWriter("index-directory",
+			indexWriter = new IndexWriter("index",
                                           new StandardAnalyzer(),
                                           create);
         }
@@ -63,13 +63,15 @@ public class Indexer {
 	         * and place your class source files at src/edu/ucla/cs/cs144/.
 		 * 
 		 */
+        
+        getIndexWriter(true);
       
         PreparedStatement selectItems = con.prepareStatement(
-        	"SELECT * from Items"
+        	"SELECT * from Item"
         );
         ResultSet rs = selectItems.executeQuery();
         
-        
+        System.out.println("Indexing");
         //add the items tot he index
         while(rs.next()) {
            	//System.out.println("Indexing item: " + item);
@@ -77,23 +79,34 @@ public class Indexer {
             Document doc = new Document();
             doc.add(new Field("ItemId", rs.getString("ItemId"), Field.Store.YES, Field.Index.NO));
             doc.add(new Field("Name", rs.getString("Name"), Field.Store.YES, Field.Index.TOKENIZED));
-            doc.add(new Field("Category", rs.getString("Category"), Field.Store.YES, Field.Index.TOKENIZED));
             doc.add(new Field("Description", rs.getString("Description"), Field.Store.YES, Field.Index.TOKENIZED));
-            String fullSearchableText = rs.getString("Name") + " " + rs.getString("Category") + " " + rs.getString("Description");
+           
+            String categories = "";
+            PreparedStatement selectCategories = con.prepareStatement(
+            	"SELECT Category FROM ItemCategory WHERE ItemId=" + rs.getString("ItemId")
+            );
+            ResultSet catRs = selectCategories.executeQuery();
+            while(catRs.next()) {
+            	categories += "" + catRs.getString("Category");
+            }
+            doc.add(new Field("Category", categories, Field.Store.YES, Field.Index.TOKENIZED));
+            
+            String fullSearchableText = rs.getString("Name") + " "  + rs.getString("Description") + "" + categories;
             doc.add(new Field("Content", fullSearchableText, Field.Store.NO, Field.Index.TOKENIZED));
             writer.addDocument(doc);
         }
+        System.out.println("Done Indexing");
 	
 	
 	        // close the database connection
 		try {
-		    conn.close();
+		    con.close();
 		} catch (SQLException ex) {
 		    System.out.println(ex);
 		}
     }    
 
-    public static void main(String args[]) {
+    public static void main(String args[]) throws CorruptIndexException, SQLException, IOException {
         Indexer idx = new Indexer();
         idx.rebuildIndexes();
     }   
