@@ -12,6 +12,7 @@ import org.apache.lucene.document.Document;
 import org.apache.lucene.analysis.TokenStream;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
 import org.apache.lucene.index.CorruptIndexException;
+import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.IndexWriter;
 
 public class Indexer {
@@ -73,12 +74,12 @@ public class Indexer {
         System.out.println("Indexing");
         //add the items tot he index
         while(rs.next()) {
-           	//System.out.println("Indexing item: " + item);
+           	//System.out.println("Indexing item: " + rs.getString("ItemId") + ", " + rs.getString("Name"));
             IndexWriter writer = getIndexWriter(false);
             Document doc = new Document();
-            doc.add(new Field("ItemId", rs.getString("ItemId"), Field.Store.YES, Field.Index.NO));
-            doc.add(new Field("Name", rs.getString("Name"), Field.Store.YES, Field.Index.TOKENIZED));
-            doc.add(new Field("Description", rs.getString("Description"), Field.Store.YES, Field.Index.TOKENIZED));
+            doc.add(new Field("itemId", rs.getString("ItemId"), Field.Store.YES, Field.Index.NO));
+            doc.add(new Field("name", rs.getString("Name"), Field.Store.YES, Field.Index.TOKENIZED));
+            doc.add(new Field("description", rs.getString("Description"), Field.Store.YES, Field.Index.TOKENIZED));
            
             String categories = "";
             Statement selectCategories = con.createStatement();
@@ -87,12 +88,15 @@ public class Indexer {
             
             
             while(catRs.next()) {
-            	categories += "" + catRs.getString("Category");
+            	categories += " " + catRs.getString("Category");
             }
-            doc.add(new Field("Category", categories, Field.Store.YES, Field.Index.TOKENIZED));
+            doc.add(new Field("category", categories, Field.Store.YES, Field.Index.TOKENIZED));
+            
             
             String fullSearchableText = rs.getString("Name") + " "  + rs.getString("Description") + " " + categories;
-            doc.add(new Field("Content", fullSearchableText, Field.Store.NO, Field.Index.TOKENIZED));
+            
+            //System.out.println("Content: " + fullSearchableText);
+            doc.add(new Field("content", fullSearchableText, Field.Store.NO, Field.Index.TOKENIZED));
             writer.addDocument(doc);
             
             selectCategories.close();
@@ -101,7 +105,7 @@ public class Indexer {
         
         selectItems.close();
 	
-	
+        indexWriter.close();
 	        // close the database connection
 		try {
 		    con.close();
@@ -113,5 +117,6 @@ public class Indexer {
     public static void main(String args[]) throws CorruptIndexException, SQLException, IOException {
         Indexer idx = new Indexer();
         idx.rebuildIndexes();
+        
     }   
 }
